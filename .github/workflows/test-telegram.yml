@@ -7,13 +7,14 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Run Diagnostics
+      - name: Run Diagnostics with Backoff
         env:
           TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           python3 - << 'EOF'
           import os
+          import time
           import requests
           
           token = os.environ.get("TOKEN", "").strip()
@@ -24,33 +25,16 @@ jobs:
           
           base_url = f"https://api.telegram.org/bot{token}"
           
-          # 1. getMe
-          try:
-              r = requests.get(f"{base_url}/getMe", timeout=15)
-              print("1. getMe response:", r.status_code, r.text)
-              bot_username = r.json().get("result", {}).get("username")
-          except Exception as e:
-              print("1. getMe exception:", e)
-              bot_username = None
-
-          # 2. getChat on Channel
-          try:
-              r = requests.get(f"{base_url}/getChat", params={"chat_id": chat_id}, timeout=15)
-              print("2. getChat response:", r.status_code, r.text)
-          except Exception as e:
-              print("2. getChat exception:", e)
-
-          # 3. sendMessage to Channel
-          try:
-              r = requests.post(f"{base_url}/sendMessage", json={"chat_id": chat_id, "text": "✅ تجربة البوت الإخباري الجديد: نجح الاتصال بنجاح!"}, timeout=15)
-              print("3. sendMessage to Channel:", r.status_code, r.text)
-          except Exception as e:
-              print("3. sendMessage exception:", e)
-
-          # 4. sendMessage to Admin User ID (6725003936)
-          try:
-              r = requests.post(f"{base_url}/sendMessage", json={"chat_id": "6725003936", "text": f"✅ مرحباً بك! البوت الجديد @{bot_username} يعمل الآن بنجاح."}, timeout=15)
-              print("4. sendMessage to User 6725003936:", r.status_code, r.text)
-          except Exception as e:
-              print("4. sendMessage to User exception:", e)
+          # First test sendMessage:
+          r = requests.post(f"{base_url}/sendMessage", json={"chat_id": chat_id, "text": "🔔 تجربة 1"}, timeout=30)
+          print("Attempt 1 status:", r.status_code, r.text)
+          
+          data = r.json()
+          retry_after = data.get("parameters", {}).get("retry_after", 35)
+          print(f"Waiting for full cooldown: {retry_after + 5} seconds...")
+          time.sleep(retry_after + 5)
+          
+          # Attempt 2 after waiting the required cooldown:
+          r2 = requests.post(f"{base_url}/sendMessage", json={"chat_id": chat_id, "text": "🌟 قناة نبض العراق والعالم الإخباري تعمل بنجاح الآن! تم تفعيل النشر التلقائي."}, timeout=30)
+          print("Attempt 2 status:", r2.status_code, r2.text)
           EOF
