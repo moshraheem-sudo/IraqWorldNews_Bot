@@ -69,13 +69,43 @@ class TelegramClient:
     def is_configured(self) -> bool:
         return bool(self.bot_token and self.chat_id)
 
+    def verify_chat(self) -> bool:
+        """Verify that the bot token is valid and can access the target chat/channel."""
+        if not self.is_configured():
+            logger.error("Cannot verify chat: Token or Chat ID is missing.")
+            return False
+
+        endpoint = f"{self.api_url}/getChat"
+        try:
+            resp = self.session.post(endpoint, json={"chat_id": self.chat_id}, timeout=15)
+            data = resp.json()
+            if data.get("ok"):
+                res = data.get("result", {})
+                logger.info(
+                    "Chat verified successfully! Title: '%s', Type: '%s', ID: %s",
+                    res.get("title", "N/A"),
+                    res.get("type", "N/A"),
+                    res.get("id"),
+                )
+                return True
+            else:
+                logger.error(
+                    "getChat failed for chat_id='%s'! Telegram API returned (%s): %s",
+                    self.chat_id,
+                    data.get("error_code"),
+                    data.get("description"),
+                )
+                return False
+        except Exception as e:
+            logger.error("Exception during chat verification: %s", e)
+            return False
+
     def send_news(self, item: NewsItem) -> bool:
         if not self.is_configured():
             logger.error("Telegram bot token or chat ID is missing! Cannot send post.")
             return False
 
-        # Post as text with web preview enabled (this automatically shows the news thumbnail cleanly and fast)
-        # without suffering from Telegram image fetch timeouts
+        # Post as text with web preview disabled to prevent Telegram server-side crawl timeouts
         text = format_news_post(item, max_body_len=3500)
         return self._send_text(text)
 
@@ -85,7 +115,7 @@ class TelegramClient:
             "chat_id": self.chat_id,
             "text": text,
             "parse_mode": "HTML",
-            "disable_web_page_preview": False,
+            "disable_web_page_preview": True,
         }
         success = self._post_with_retry(endpoint, payload)
         # If chat not found and chat_id is positive digits, try prefixing -100 (Telegram channel ID format)
@@ -101,7 +131,7 @@ class TelegramClient:
     def _post_with_retry(self, endpoint: str, payload: dict, retries: int = 1) -> bool:
         for attempt in range(retries + 1):
             try:
-                resp = self.session.post(endpoint, json=payload, timeout=15)
+                resp = self.session.post(endpoint, json=payload, timeout=30)
                 data = resp.json()
 
                 if data.get("ok"):

@@ -33,12 +33,15 @@ def run_cycle(
     storage = StorageManager(storage_path)
     telegram = TelegramClient(config.telegram_bot_token, config.telegram_chat_id)
 
-    if not dry_run and not telegram.is_configured():
-        logger.error(
-            "TELEGRAM_BOT_TOKEN and/or TELEGRAM_CHAT_ID are not set! "
-            "Please configure them in your environment or GitHub Secrets."
-        )
-        return 1
+    if not dry_run:
+        if not telegram.is_configured():
+            logger.error(
+                "TELEGRAM_BOT_TOKEN and/or TELEGRAM_CHAT_ID are not set! "
+                "Please configure them in your environment or GitHub Secrets."
+            )
+            return 1
+        # Verify access to target channel before doing the heavy scraping work
+        telegram.verify_chat()
 
     session = create_http_session(config.user_agent)
     all_new_items: List[NewsItem] = []
