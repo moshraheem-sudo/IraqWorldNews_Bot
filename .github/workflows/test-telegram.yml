@@ -1,0 +1,56 @@
+name: Test Telegram Bot
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Diagnostics
+        env:
+          TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          python3 - << 'EOF'
+          import os
+          import requests
+          
+          token = os.environ.get("TOKEN", "").strip()
+          chat_id = os.environ.get("CHAT_ID", "").strip()
+          
+          print(f"Testing with Token ID prefix: {token.split(':')[0]}")
+          print(f"Target Chat ID: {chat_id}")
+          
+          base_url = f"https://api.telegram.org/bot{token}"
+          
+          # 1. getMe
+          try:
+              r = requests.get(f"{base_url}/getMe", timeout=15)
+              print("1. getMe response:", r.status_code, r.text)
+              bot_username = r.json().get("result", {}).get("username")
+          except Exception as e:
+              print("1. getMe exception:", e)
+              bot_username = None
+
+          # 2. getChat on Channel
+          try:
+              r = requests.get(f"{base_url}/getChat", params={"chat_id": chat_id}, timeout=15)
+              print("2. getChat response:", r.status_code, r.text)
+          except Exception as e:
+              print("2. getChat exception:", e)
+
+          # 3. sendMessage to Channel
+          try:
+              r = requests.post(f"{base_url}/sendMessage", json={"chat_id": chat_id, "text": "✅ تجربة البوت الإخباري الجديد: نجح الاتصال بنجاح!"}, timeout=15)
+              print("3. sendMessage to Channel:", r.status_code, r.text)
+          except Exception as e:
+              print("3. sendMessage exception:", e)
+
+          # 4. sendMessage to Admin User ID (6725003936)
+          try:
+              r = requests.post(f"{base_url}/sendMessage", json={"chat_id": "6725003936", "text": f"✅ مرحباً بك! البوت الجديد @{bot_username} يعمل الآن بنجاح."}, timeout=15)
+              print("4. sendMessage to User 6725003936:", r.status_code, r.text)
+          except Exception as e:
+              print("4. sendMessage to User exception:", e)
+          EOF
