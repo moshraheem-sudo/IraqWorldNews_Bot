@@ -7,34 +7,21 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Run Diagnostics with Backoff
+      - name: Inspect Bot Info and Channel with curl
         env:
           TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          python3 - << 'EOF'
-          import os
-          import time
-          import requests
-          
-          token = os.environ.get("TOKEN", "").strip()
-          chat_id = os.environ.get("CHAT_ID", "").strip()
-          
-          print(f"Testing with Token ID prefix: {token.split(':')[0]}")
-          print(f"Target Chat ID: {chat_id}")
-          
-          base_url = f"https://api.telegram.org/bot{token}"
-          
-          # First test sendMessage:
-          r = requests.post(f"{base_url}/sendMessage", json={"chat_id": chat_id, "text": "🔔 تجربة 1"}, timeout=30)
-          print("Attempt 1 status:", r.status_code, r.text)
-          
-          data = r.json()
-          retry_after = data.get("parameters", {}).get("retry_after", 35)
-          print(f"Waiting for full cooldown: {retry_after + 5} seconds...")
-          time.sleep(retry_after + 5)
-          
-          # Attempt 2 after waiting the required cooldown:
-          r2 = requests.post(f"{base_url}/sendMessage", json={"chat_id": chat_id, "text": "🌟 قناة نبض العراق والعالم الإخباري تعمل بنجاح الآن! تم تفعيل النشر التلقائي."}, timeout=30)
-          print("Attempt 2 status:", r2.status_code, r2.text)
-          EOF
+          echo "=== 1. Checking getMe with verbose curl ==="
+          curl -v -m 60 "https://api.telegram.org/bot${TOKEN}/getMe"
+          echo ""
+
+          echo "=== 2. Checking getChat with verbose curl ==="
+          curl -v -m 60 "https://api.telegram.org/bot${TOKEN}/getChat?chat_id=${CHAT_ID}"
+          echo ""
+
+          echo "=== 3. Sending test message to Channel ==="
+          curl -v -m 60 -X POST "https://api.telegram.org/bot${TOKEN}/sendMessage" \
+            -H "Content-Type: application/json" \
+            -d "{\"chat_id\": \"${CHAT_ID}\", \"text\": \"🎉 مبروك! تم تفعيل بوت نبض العراق والعالم بنجاح والاتصال بالقناة مكتمل 100%.\"}"
+          echo ""
