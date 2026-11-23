@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "last_updated": "2026-11-23T20:21:06.901360Z",
-  "total_sent": 315,
+  "last_updated": "2026-11-23T20:34:44.310164Z",
+  "total_sent": 327,
   "sent_ids": [
     "tg:alsharqiyagroup:57352",
     "tg:almayadeen:407738",
@@ -317,6 +317,18 @@
     "rss:aljazeera_rss:350a72bc",
     "tg:alsharqiyagroup:57355",
     "tg:alsharqiyagroup:57356",
-    "rss:rt_arabic_rss:7e7c94c6"
+    "rss:rt_arabic_rss:7e7c94c6",
+    "rss:aljazeera_rss:5d81bdd3",
+    "rss:aljazeera_rss:0775171a",
+    "rss:aljazeera_rss:3d742c88",
+    "rss:aljazeera_rss:0ea642ee",
+    "rss:aljazeera_rss:79a17278",
+    "rss:aljazeera_rss:378873d1",
+    "rss:aljazeera_rss:1cbbc052",
+    "rss:aljazeera_rss:4361ab5c",
+    "tg:alarabiya:170468",
+    "rss:rt_arabic_rss:0c5b48d5",
+    "tg:alsumariatviraq:129442",
+    "tg:rudawarabic:124798"
   ]
 }
