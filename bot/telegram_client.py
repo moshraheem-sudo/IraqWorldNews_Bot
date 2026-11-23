@@ -62,7 +62,7 @@ def format_news_post(item: NewsItem, max_body_len: int = 1500) -> str:
 class TelegramClient:
     def __init__(self, bot_token: str, chat_id: str):
         self.bot_token = bot_token.strip()
-        self.chat_id = chat_id.strip()
+        self.chat_id = str(chat_id).strip()
         self.api_url = f"https://api.telegram.org/bot{self.bot_token}"
         self.session = requests.Session()
 
@@ -95,7 +95,16 @@ class TelegramClient:
             "parse_mode": "HTML",
             "disable_web_page_preview": False,
         }
-        return self._post_with_retry(endpoint, payload)
+        success = self._post_with_retry(endpoint, payload)
+        # If chat not found and chat_id is positive digits, try prefixing -100 (Telegram channel ID format)
+        if not success and self.chat_id.isdigit() and not self.chat_id.startswith("-100"):
+            alt_chat_id = f"-100{self.chat_id}"
+            logger.info("Retrying with channel prefix ID: %s", alt_chat_id)
+            payload["chat_id"] = alt_chat_id
+            if self._post_with_retry(endpoint, payload):
+                self.chat_id = alt_chat_id  # update to working ID
+                return True
+        return success
 
     def _send_photo(self, photo_url: str, caption: str) -> bool:
         endpoint = f"{self.api_url}/sendPhoto"
@@ -105,7 +114,16 @@ class TelegramClient:
             "caption": caption,
             "parse_mode": "HTML",
         }
-        return self._post_with_retry(endpoint, payload)
+        success = self._post_with_retry(endpoint, payload)
+        # If chat not found and chat_id is positive digits, try prefixing -100 (Telegram channel ID format)
+        if not success and self.chat_id.isdigit() and not self.chat_id.startswith("-100"):
+            alt_chat_id = f"-100{self.chat_id}"
+            logger.info("Retrying sendPhoto with channel prefix ID: %s", alt_chat_id)
+            payload["chat_id"] = alt_chat_id
+            if self._post_with_retry(endpoint, payload):
+                self.chat_id = alt_chat_id  # update to working ID
+                return True
+        return success
 
     def _post_with_retry(self, endpoint: str, payload: dict, retries: int = 2) -> bool:
         for attempt in range(retries + 1):
