@@ -144,7 +144,13 @@ class TelegramClient:
                     time.sleep(retry_after + 1)
                     continue
 
-                logger.error("Telegram API error (%s): %s", error_code, description)
+                logger.error(
+                    "Telegram API error (%s) on %s: %s | chat_id=%s",
+                    error_code,
+                    endpoint.split("/bot")[-1],
+                    description,
+                    payload.get("chat_id"),
+                )
                 return False
 
             except requests.RequestException as e:

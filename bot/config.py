@@ -39,8 +39,12 @@ def load_app_config(
     token_override: Optional[str] = None,
     chat_id_override: Optional[str] = None,
 ) -> AppConfig:
-    bot_token = token_override or os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
-    chat_id = chat_id_override or os.environ.get("TELEGRAM_CHAT_ID", "").strip()
+    bot_token = (token_override or os.environ.get("TELEGRAM_BOT_TOKEN", "")).strip()
+    chat_id = (chat_id_override or os.environ.get("TELEGRAM_CHAT_ID", "")).strip()
+
+    # Log masked debug info
+    masked_token = f"{bot_token[:8]}...{bot_token[-4:]}" if len(bot_token) > 12 else "INVALID"
+    print(f"DEBUG: Loaded bot_token='{masked_token}' (len={len(bot_token)}), chat_id='{chat_id}'")
 
     first_run_limit = int(os.environ.get("FIRST_RUN_MAX_POSTS", "3"))
     delay = float(os.environ.get("DELAY_BETWEEN_POSTS", "2.0"))
