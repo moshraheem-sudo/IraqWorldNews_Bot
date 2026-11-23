@@ -1,0 +1,25 @@
+name: Test Telegram Connection
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test Bot API
+        run: |
+          python -c "
+          import requests
+          tokens = [
+              '8922701594:AAGlVJduGsiGp3VU9rKm-M9s9zKF7eUIC3Q',
+              '6725003936:AAGlVJduGsiGp3VU9rKm-M9s9zKF7eUIC3Q'
+          ]
+          for t in tokens:
+              try:
+                  url = f'https://api.telegram.org/bot{t}/getMe'
+                  resp = requests.get(url, timeout=10)
+                  print(f'Testing {t[:10]}... Status: {resp.status_code}, Body: {resp.text}')
+              except Exception as e:
+                  print(f'Error for {t[:10]}: {e}')
+          "
