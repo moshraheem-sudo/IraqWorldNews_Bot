@@ -79,31 +79,33 @@ def run_cycle(
         storage.save()
         return 0
 
-    # First run protection: prevent spamming the channel with historical news
-    items_to_send: List[NewsItem] = []
-    if storage.is_first_run:
+    # Protection against backlog flooding:
+    # We strictly enforce a max batch size per run (e.g. 5 posts max)
+    # This ensures each 10-minute cron cycle finishes in ~15 seconds without triggering Telegram flood limits.
+    MAX_POSTS_PER_RUN = 5
+
+    # Sort all candidates by published_at (oldest to newest)
+    all_new_items.sort(key=lambda x: x.published_at)
+
+    if storage.is_first_run or len(all_new_items) > MAX_POSTS_PER_RUN:
         logger.info(
-            "First run detected! Seeding storage. Sending only the %d latest items and marking the rest as seen.",
-            config.first_run_max_posts,
+            "Found %d items. Limiting this run to the %d latest items and marking the rest as sent.",
+            len(all_new_items),
+            MAX_POSTS_PER_RUN,
         )
-        # Sort newest first, take first_run_max_posts
-        all_new_items.sort(key=lambda x: x.published_at, reverse=True)
-        items_to_send = all_new_items[: config.first_run_max_posts]
-
-        # Mark all other items as sent so they won't be spammed next time
-        for item in all_new_items[config.first_run_max_posts :]:
+        # Take the most recent items
+        items_to_send = all_new_items[-MAX_POSTS_PER_RUN:]
+        # Mark all older overflow items as sent in storage so backlog never accumulates
+        for item in all_new_items[:-MAX_POSTS_PER_RUN]:
             storage.mark_sent(item.id)
-
-        # Reverse back so the selected items are sent in chronological order
-        items_to_send.reverse()
     else:
-        # Normal run: sort chronologically (oldest unseen first so channel timeline looks natural)
-        all_new_items.sort(key=lambda x: x.published_at)
         items_to_send = all_new_items
 
     logger.info("Ready to publish %d new items to Telegram...", len(items_to_send))
 
     published_count = 0
+    consecutive_failures = 0
+
     for idx, item in enumerate(items_to_send, 1):
         logger.info("[%d/%d] Publishing: [%s] %s", idx, len(items_to_send), item.source_name, item.title[:50])
 
@@ -116,9 +118,15 @@ def run_cycle(
             if success:
                 storage.mark_sent(item.id)
                 published_count += 1
+                consecutive_failures = 0
                 logger.info("Successfully published %s", item.id)
             else:
+                consecutive_failures += 1
                 logger.error("Failed to send %s to Telegram.", item.id)
+                # If 2 consecutive failures occur (e.g. channel permission or flood limit), stop this cycle early
+                if consecutive_failures >= 2:
+                    logger.warning("Aborting remaining posts in this cycle due to repeated send failures.")
+                    break
 
             # Polite delay between messages to respect Telegram limits
             time.sleep(config.delay_between_posts)

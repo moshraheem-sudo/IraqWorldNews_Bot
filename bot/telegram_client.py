@@ -74,16 +74,8 @@ class TelegramClient:
             logger.error("Telegram bot token or chat ID is missing! Cannot send post.")
             return False
 
-        # Attempt to send with photo if image_url exists
-        if item.image_url:
-            caption = format_news_post(item, max_body_len=800)
-            if len(caption) <= 1024:
-                success = self._send_photo(item.image_url, caption)
-                if success:
-                    return True
-                logger.info("sendPhoto failed or image invalid, falling back to text message.")
-
-        # Text fallback or normal text post
+        # Post as text with web preview enabled (this automatically shows the news thumbnail cleanly and fast)
+        # without suffering from Telegram image fetch timeouts
         text = format_news_post(item, max_body_len=3500)
         return self._send_text(text)
 
@@ -106,29 +98,10 @@ class TelegramClient:
                 return True
         return success
 
-    def _send_photo(self, photo_url: str, caption: str) -> bool:
-        endpoint = f"{self.api_url}/sendPhoto"
-        payload = {
-            "chat_id": self.chat_id,
-            "photo": photo_url,
-            "caption": caption,
-            "parse_mode": "HTML",
-        }
-        success = self._post_with_retry(endpoint, payload)
-        # If chat not found and chat_id is positive digits, try prefixing -100 (Telegram channel ID format)
-        if not success and self.chat_id.isdigit() and not self.chat_id.startswith("-100"):
-            alt_chat_id = f"-100{self.chat_id}"
-            logger.info("Retrying sendPhoto with channel prefix ID: %s", alt_chat_id)
-            payload["chat_id"] = alt_chat_id
-            if self._post_with_retry(endpoint, payload):
-                self.chat_id = alt_chat_id  # update to working ID
-                return True
-        return success
-
-    def _post_with_retry(self, endpoint: str, payload: dict, retries: int = 2) -> bool:
+    def _post_with_retry(self, endpoint: str, payload: dict, retries: int = 1) -> bool:
         for attempt in range(retries + 1):
             try:
-                resp = self.session.post(endpoint, json=payload, timeout=25)
+                resp = self.session.post(endpoint, json=payload, timeout=15)
                 data = resp.json()
 
                 if data.get("ok"):
@@ -139,15 +112,14 @@ class TelegramClient:
 
                 # Handle rate limiting (429)
                 if error_code == 429:
-                    retry_after = data.get("parameters", {}).get("retry_after", 5)
-                    logger.warning("Telegram Rate Limit hit. Sleeping for %d seconds...", retry_after)
-                    time.sleep(retry_after + 1)
+                    retry_after = data.get("parameters", {}).get("retry_after", 10)
+                    logger.warning("Telegram Rate Limit hit (retry_after=%d). Sleeping...", retry_after)
+                    time.sleep(min(retry_after + 1, 35))
                     continue
 
                 logger.error(
-                    "Telegram API error (%s) on %s: %s | chat_id=%s",
+                    "Telegram API response: code=%s, desc='%s', chat_id='%s'",
                     error_code,
-                    endpoint.split("/bot")[-1],
                     description,
                     payload.get("chat_id"),
                 )
