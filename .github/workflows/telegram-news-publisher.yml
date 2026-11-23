@@ -1,0 +1,58 @@
+name: Iraq & World News Telegram Publisher
+
+on:
+  schedule:
+    # يعمل تلقائياً كل 10 دقائق (أو يمكنك تغييره إلى 15 دقيقة: "*/15 * * * *")
+    - cron: "*/10 * * * *"
+  workflow_dispatch: # يتيح لك تشغيل النشر يدوياً في أي لحظة بضغطة زر
+
+# إعطاء صلاحيات الكتابة لـ GitHub Actions ليتمكن من حفظ ملف data/sent_posts.json
+permissions:
+  contents: write
+
+concurrency:
+  group: telegram-news-sync
+  cancel-in-progress: false
+
+jobs:
+  publish-news:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Fetch and Publish News to Telegram Channel
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          FIRST_RUN_MAX_POSTS: 3
+          DELAY_BETWEEN_POSTS: 2.0
+        run: |
+          python -m bot.publisher
+
+      - name: Commit and Push Deduplication State
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/sent_posts.json
+          if git diff --cached --quiet; then
+            echo "No state changes to commit."
+          else
+            git commit -m "chore: update sent news history [skip ci]"
+            git pull --rebase --autostash origin main || true
+            git push origin HEAD:main
+          fi

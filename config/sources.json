@@ -1,0 +1,175 @@
+{
+  "schema_version": "1.0",
+  "defaults": {
+    "request_timeout_seconds": 10,
+    "max_posts_per_fetch": 20,
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 (Compatible; IraqWorldNewsBot/1.0)"
+  },
+  "sources": [
+    {
+      "id": "ina",
+      "type": "telegram_web",
+      "name": "وكالة الأنباء العراقية (واع)",
+      "username": "inainaiq",
+      "url": "https://t.me/s/inainaiq",
+      "category": "أخبار العراق",
+      "hashtag": "العراق",
+      "language": "ar",
+      "enabled": true
+    },
+    {
+      "id": "sabereen",
+      "type": "telegram_web",
+      "name": "صابرين نيوز",
+      "username": "SabrenNewss",
+      "url": "https://t.me/s/SabrenNewss",
+      "category": "أخبار العراق",
+      "hashtag": "عاجل_العراق",
+      "language": "ar",
+      "enabled": true
+    },
+    {
+      "id": "alsumaria_iraq",
+      "type": "telegram_web",
+      "name": "السومرية نيوز",
+      "username": "alsumariatviraq",
+      "url": "https://t.me/s/alsumariatviraq",
+      "category": "أخبار العراق",
+      "hashtag": "السومرية",
+      "language": "ar",
+      "enabled": true
+    },
+    {
+      "id": "alsharqiya_tg",
+      "type": "telegram_web",
+      "name": "قناة الشرقية نيوز",
+      "username": "alsharqiyagroup",
+      "url": "https://t.me/s/alsharqiyagroup",
+      "category": "أخبار العراق",
+      "hashtag": "الشرقية",
+      "language": "ar",
+      "enabled": true
+    },
+    {
+      "id": "baghdadtoday",
+      "type": "telegram_web",
+      "name": "بغداد اليوم",
+      "username": "baghdadtoday",
+      "url": "https://t.me/s/baghdadtoday",
+      "category": "أخبار العراق",
+      "hashtag": "بغداد_اليوم",
+      "language": "ar",
+      "enabled": true
+    },
+    {
+      "id": "rudaw_ar",
+      "type": "telegram_web",
+      "name": "رووداو عربية",
+      "username": "RudawArabic",
+      "url": "https://t.me/s/RudawArabic",
+      "category": "أخبار العراق وكردستان",
+      "hashtag": "رووداو",
+      "language": "ar",
+      "enabled": true
+    },
+    {
+      "id": "alarabiya_tg",
+      "type": "telegram_web",
+      "name": "العربية عاجل",
+      "username": "AlArabiya",
+      "url": "https://t.me/s/AlArabiya",
+      "category": "أخبار عربية وعالمية",
+      "hashtag": "العربية",
+      "language": "ar",
+      "enabled": true
+    },
+    {
+      "id": "almayadeen_tg",
+      "type": "telegram_web",
+      "name": "الميادين عاجل",
+      "username": "almayadeen",
+      "url": "https://t.me/s/almayadeen",
+      "category": "أخبار عربية وعالمية",
+      "hashtag": "الميادين",
+      "language": "ar",
+      "enabled": true
+    },
+    {
+      "id": "france24_ar",
+      "type": "telegram_web",
+      "name": "فرانس 24",
+      "username": "France24_ar",
+      "url": "https://t.me/s/France24_ar",
+      "category": "أخبار عالمية",
+      "hashtag": "فرانس24",
+      "language": "ar",
+      "enabled": true
+    },
+    {
+      "id": "skynews_rss",
+      "type": "rss",
+      "name": "سكاي نيوز عربية",
+      "username": "skynewsarabia_rss",
+      "url": "https://www.skynewsarabia.com/rss.xml",
+      "category": "أخبار عربية وعالمية",
+      "hashtag": "سكاي_نيوز",
+      "language": "ar",
+      "enabled": true
+    },
+    {
+      "id": "aljazeera_rss",
+      "type": "rss",
+      "name": "الجزيرة نت",
+      "username": "aljazeera_rss",
+      "url": "https://www.aljazeera.net/aljazeerarss/a7c186be-1baa-4bd4-9d80-a84db769f779/73d0e1b4-532f-45ef-b135-bfdff8b8cab9",
+      "category": "أخبار عربية وعالمية",
+      "hashtag": "الجزيرة",
+      "language": "ar",
+      "enabled": true
+    },
+    {
+      "id": "bbc_arabic_rss",
+      "type": "rss",
+      "name": "BBC عربي",
+      "username": "bbc_arabic_rss",
+      "url": "https://feeds.bbci.co.uk/arabic/rss.xml",
+      "category": "أخبار عالمية",
+      "hashtag": "بي_بي_سي",
+      "language": "ar",
+      "enabled": true
+    },
+    {
+      "id": "rt_arabic_rss",
+      "type": "rss",
+      "name": "RT عربي",
+      "username": "rt_arabic_rss",
+      "url": "https://arabic.rt.com/rss/",
+      "category": "أخبار عالمية",
+      "hashtag": "روسيا_اليوم",
+      "language": "ar",
+      "enabled": true
+    },
+    {
+      "id": "dw_ar_rss",
+      "type": "rss",
+      "name": "DW عربي",
+      "username": "dw_ar_rss",
+      "url": "https://rss.dw.com/rdf/rss-ar-all",
+      "category": "أخبار عالمية",
+      "hashtag": "دويتشه_فيله",
+      "language": "ar",
+      "enabled": true
+    },
+    {
+      "id": "independent_ar_rss",
+      "type": "rss",
+      "name": "إندبندنت عربية",
+      "username": "independent_ar_rss",
+      "url": "https://www.independentarabia.com/rss.xml",
+      "category": "أخبار عربية وعالمية",
+      "hashtag": "إندبندنت",
+      "language": "ar",
+      "enabled": true
+    }
+  ]
+}
