@@ -7,10 +7,11 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Test Message with Full Backoff
+      - name: Test Message with Browser Headers
         env:
           TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          PYTHONUNBUFFERED: "1"
         run: |
           python3 - << 'EOF'
           import os
@@ -21,43 +22,37 @@ jobs:
           chat_id = os.environ.get("CHAT_ID", "").strip()
           base_url = f"https://api.telegram.org/bot{token}"
           
-          print(f"Testing Bot ID: {token.split(':')[0]} with Chat: {chat_id}")
+          headers = {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+              "Accept": "application/json",
+          }
           
-          def call_api(endpoint, payload=None):
-              for attempt in range(1, 4):
-                  print(f"[{endpoint}] Attempt {attempt} sending request...")
-                  try:
-                      if payload:
-                          r = requests.post(f"{base_url}/{endpoint}", json=payload, timeout=60)
-                      else:
-                          r = requests.get(f"{base_url}/{endpoint}", timeout=60)
-                      
-                      print(f"[{endpoint}] Status: {r.status_code}, Body: {r.text}")
-                      data = r.json()
-                      if data.get("ok"):
-                          return data
-                      
-                      if data.get("error_code") == 429:
-                          wait_time = data.get("parameters", {}).get("retry_after", 32) + 3
-                          print(f"[{endpoint}] Rate limited by Telegram! Pausing execution for {wait_time} seconds...")
-                          time.sleep(wait_time)
-                          continue
-                      else:
-                          break
-                  except Exception as e:
-                      print(f"[{endpoint}] Exception on attempt {attempt}: {e}")
-                      time.sleep(5)
-              return None
+          print(f"Testing Bot ID: {token.split(':')[0]} with Chat: {chat_id}", flush=True)
+          
+          session = requests.Session()
+          session.headers.update(headers)
+          
+          # Test getMe with custom headers
+          print("Checking getMe...", flush=True)
+          try:
+              r = session.get(f"{base_url}/getMe", timeout=15)
+              print(f"getMe response: {r.status_code} -> {r.text}", flush=True)
+          except Exception as e:
+              print(f"getMe exception: {e}", flush=True)
 
-          # 1. Check getMe
-          me = call_api("getMe")
-          print("Bot Details:", me)
-
-          # 2. Send message to Channel
-          msg = call_api("sendMessage", {
-              "chat_id": chat_id,
-              "text": "🎉 <b>نبض العراق والعالم الإخباري</b>\n\nتم ربط البوت بالقناة وتفعيل نظام النشر التلقائي بنجاح!",
-              "parse_mode": "HTML"
-          })
-          print("Send Message Result:", msg)
+          # Test sendMessage to Channel
+          print("Sending test message to channel...", flush=True)
+          try:
+              r = session.post(
+                  f"{base_url}/sendMessage",
+                  json={
+                      "chat_id": chat_id,
+                      "text": "🎉 <b>نبض العراق والعالم الإخباري</b>\n\nتم ربط البوت بالقناة بنجاح! جاهز لنشر الأخبار.",
+                      "parse_mode": "HTML"
+                  },
+                  timeout=15
+              )
+              print(f"sendMessage response: {r.status_code} -> {r.text}", flush=True)
+          except Exception as e:
+              print(f"sendMessage exception: {e}", flush=True)
           EOF
