@@ -39,8 +39,8 @@ def load_app_config(
     token_override: Optional[str] = None,
     chat_id_override: Optional[str] = None,
 ) -> AppConfig:
-    bot_token = (token_override or os.environ.get("TELEGRAM_BOT_TOKEN", "")).strip()
-    chat_id = (chat_id_override or os.environ.get("TELEGRAM_CHAT_ID", "")).strip()
+    bot_token = (token_override or os.environ.get("TELEGRAM_BOT_TOKEN", "")).strip().lstrip("\ufeff\u200e\u200f\u202a\u202b\u202c")
+    chat_id = (chat_id_override or os.environ.get("TELEGRAM_CHAT_ID", "")).strip().lstrip("\ufeff\u200e\u200f\u202a\u202b\u202c")
 
     # Log masked debug info
     masked_token = f"{bot_token[:8]}...{bot_token[-4:]}" if len(bot_token) > 12 else "INVALID"
