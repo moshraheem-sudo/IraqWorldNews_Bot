@@ -33,6 +33,7 @@ class NewsItem:
     original_url: str
     image_url: Optional[str]
     published_at: str
+    video_url: Optional[str] = None
 
 
 def clean_text(raw: str) -> str:
@@ -278,17 +279,43 @@ def parse_x_list(html_content: str, source: SourceConfig) -> List[NewsItem]:
         raw_text = tweet.get("text") or ""
         clean_tweet_text = clean_text(raw_text)
 
-        # Skip retweets without text or empty tweets
-        if not clean_tweet_text:
-            continue
-
-        # Photos
+        # Media extraction (Photos & High Quality MP4 Videos)
         image_url = None
-        photos = tweet.get("photos", [])
-        if photos and isinstance(photos, list):
-            first_photo = photos[0]
-            if isinstance(first_photo, dict) and first_photo.get("url"):
-                image_url = first_photo.get("url")
+        video_url = None
+
+        ext_media = (tweet.get("extended_entities") or {}).get("media") or (tweet.get("entities") or {}).get("media") or []
+        for m in ext_media:
+            short_media_url = str(m.get("url") or "")
+            if short_media_url:
+                raw_text = raw_text.replace(short_media_url, "").strip()
+
+            m_type = str(m.get("type") or "photo")
+            thumb_url = str(m.get("media_url_https") or m.get("media_url") or "").strip()
+
+            if m_type == "photo":
+                if not image_url and thumb_url:
+                    image_url = thumb_url
+            elif m_type in ("video", "animated_gif"):
+                variants = (m.get("video_info") or {}).get("variants") or []
+                mp4s = [v for v in variants if v.get("content_type") == "video/mp4" and v.get("url")]
+                mp4s.sort(key=lambda x: int(x.get("bitrate") or 0), reverse=True)
+                if mp4s and not video_url:
+                    video_url = str(mp4s[0]["url"])
+                if thumb_url and not image_url:
+                    image_url = thumb_url
+
+        if not image_url:
+            photos = tweet.get("photos", [])
+            if photos and isinstance(photos, list):
+                first_photo = photos[0]
+                if isinstance(first_photo, dict) and first_photo.get("url"):
+                    image_url = first_photo.get("url")
+
+        clean_tweet_text = clean_text(raw_text)
+
+        # Skip retweets without text or empty tweets
+        if not clean_tweet_text and not image_url and not video_url:
+            continue
 
         created_at_raw = tweet.get("created_at")
         published_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
@@ -315,6 +342,7 @@ def parse_x_list(html_content: str, source: SourceConfig) -> List[NewsItem]:
                 original_url=original_url,
                 image_url=image_url,
                 published_at=published_at,
+                video_url=video_url,
             )
         )
     return items[-source.max_posts:]

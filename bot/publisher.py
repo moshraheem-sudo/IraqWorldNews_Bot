@@ -123,9 +123,9 @@ def run_cycle(
         return 0
 
     # Protection against backlog flooding:
-    # Configurable max batch size per run (default to 15 posts)
+    # Configurable max batch size per run (default to 100 posts)
     max_posts_env = os.environ.get("MAX_POSTS_PER_RUN", "").strip()
-    MAX_POSTS_PER_RUN = int(max_posts_env) if max_posts_env.isdigit() else 15
+    MAX_POSTS_PER_RUN = int(max_posts_env) if max_posts_env.isdigit() else 100
 
     # Sort all candidates by published_at (oldest to newest)
     all_new_items.sort(key=lambda x: x.published_at)

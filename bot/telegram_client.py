@@ -112,16 +112,41 @@ class TelegramClient:
             logger.error("Telegram bot token or chat ID is missing! Cannot send post.")
             return False
 
-        # Attempt to send as Photo with caption if item has an image
+        caption = format_news_post(item, max_body_len=950)
+
+        # 1. Attempt to send as playable Video if item has a video URL
+        if item.video_url and item.video_url.startswith("http"):
+            if self._send_video(item.video_url, caption):
+                return True
+            logger.info("sendVideo failed or timed out for %s, trying photo/text fallback.", item.id)
+
+        # 2. Attempt to send as Photo with caption if item has an image
         if item.image_url and item.image_url.startswith("http"):
-            caption = format_news_post(item, max_body_len=950)
             if self._send_photo(item.image_url, caption):
                 return True
             logger.info("sendPhoto failed or timed out for %s, falling back to formatted text.", item.id)
 
-        # Fallback / Text post with preview disabled
+        # 3. Fallback / Text post with preview disabled
         text = format_news_post(item, max_body_len=3500)
         return self._send_text(text)
+
+    def _send_video(self, video_url: str, caption: str) -> bool:
+        endpoint = f"{self.api_url}/sendVideo"
+        payload = {
+            "chat_id": self.chat_id,
+            "video": video_url,
+            "caption": caption,
+            "parse_mode": "HTML",
+            "supports_streaming": True,
+        }
+        success = self._post_with_retry(endpoint, payload, timeout=35)
+        if not success and self.chat_id.isdigit() and not self.chat_id.startswith("-100"):
+            alt_chat_id = f"-100{self.chat_id}"
+            payload["chat_id"] = alt_chat_id
+            if self._post_with_retry(endpoint, payload, timeout=35):
+                self.chat_id = alt_chat_id
+                return True
+        return success
 
     def _send_photo(self, photo_url: str, caption: str) -> bool:
         endpoint = f"{self.api_url}/sendPhoto"

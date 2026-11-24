@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "defaults": {
     "request_timeout_seconds": 10,
-    "max_posts_per_fetch": 20,
+    "max_posts_per_fetch": 50,
     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 (Compatible; IraqWorldNewsBot/1.0)"
   },
   "sources": [
@@ -180,7 +180,8 @@
       "category": "أخبار عربية وعالمية",
       "hashtag": "منصة_X",
       "language": "ar",
-      "enabled": true
+      "enabled": true,
+      "max_posts": 100
     }
   ]
 }

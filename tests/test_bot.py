@@ -106,7 +106,20 @@ class TestBotComponents(unittest.TestCase):
                                         "text": "عاجل: تصريح هام لوزير الخارجية حول الأوضاع الإقليمية",
                                         "user": {"screen_name": "AlArabiya", "name": "العربية عاجل"},
                                         "created_at": "Tue Nov 24 16:00:00 +0000 2026",
-                                        "photos": [{"url": "https://pbs.twimg.com/media/example.jpg"}]
+                                        "photos": [{"url": "https://pbs.twimg.com/media/example.jpg"}],
+                                        "extended_entities": {
+                                            "media": [
+                                                {
+                                                    "type": "video",
+                                                    "media_url_https": "https://pbs.twimg.com/media/example.jpg",
+                                                    "video_info": {
+                                                        "variants": [
+                                                            {"content_type": "video/mp4", "url": "https://video.twimg.com/test.mp4", "bitrate": 1000}
+                                                        ]
+                                                    }
+                                                }
+                                            ]
+                                        }
                                     }
                                 }
                             }
@@ -128,6 +141,7 @@ class TestBotComponents(unittest.TestCase):
         self.assertEqual(len(items), 1)
         self.assertEqual(items[0].id, "x:1234567890123456789")
         self.assertEqual(items[0].image_url, "https://pbs.twimg.com/media/example.jpg")
+        self.assertEqual(items[0].video_url, "https://video.twimg.com/test.mp4")
         self.assertIn("تصريح هام", items[0].content)
 
 
