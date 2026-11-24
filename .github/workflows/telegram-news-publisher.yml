@@ -39,7 +39,7 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          FIRST_RUN_MAX_POSTS: 3
+          MAX_POSTS_PER_RUN: 15
           DELAY_BETWEEN_POSTS: 2.0
         run: |
           python -m bot.publisher

@@ -64,7 +64,14 @@ class TelegramClient:
         self.bot_token = bot_token.strip()
         self.chat_id = str(chat_id).strip()
         self.api_url = f"https://api.telegram.org/bot{self.bot_token}"
+        self._init_session()
+
+    def _init_session(self):
         self.session = requests.Session()
+        self.session.headers.update({
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) NewsBot/1.0",
+            "Connection": "close",
+        })
 
     def is_configured(self) -> bool:
         return bool(self.bot_token and self.chat_id)
@@ -77,7 +84,7 @@ class TelegramClient:
 
         endpoint = f"{self.api_url}/getChat"
         try:
-            resp = self.session.post(endpoint, json={"chat_id": self.chat_id}, timeout=15)
+            resp = self.session.post(endpoint, json={"chat_id": self.chat_id}, timeout=30)
             data = resp.json()
             if data.get("ok"):
                 res = data.get("result", {})
@@ -131,7 +138,7 @@ class TelegramClient:
     def _post_with_retry(self, endpoint: str, payload: dict, retries: int = 1) -> bool:
         for attempt in range(retries + 1):
             try:
-                resp = self.session.post(endpoint, json=payload, timeout=30)
+                resp = self.session.post(endpoint, json=payload, timeout=40)
                 data = resp.json()
 
                 if data.get("ok"):
@@ -144,6 +151,7 @@ class TelegramClient:
                 if error_code == 429:
                     retry_after = data.get("parameters", {}).get("retry_after", 10)
                     logger.warning("Telegram Rate Limit hit (retry_after=%d). Sleeping...", retry_after)
+                    self._init_session()
                     time.sleep(min(retry_after + 1, 35))
                     continue
 
@@ -157,6 +165,7 @@ class TelegramClient:
 
             except requests.RequestException as e:
                 logger.warning("Network request error on attempt %d: %s", attempt + 1, e)
+                self._init_session()
                 time.sleep(2)
 
         return False

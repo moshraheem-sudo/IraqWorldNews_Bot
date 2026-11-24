@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import sys
 import time
 from pathlib import Path
@@ -83,9 +84,9 @@ def run_cycle(
         return 0
 
     # Protection against backlog flooding:
-    # We strictly enforce a max batch size per run (e.g. 5 posts max)
-    # This ensures each 10-minute cron cycle finishes in ~15 seconds without triggering Telegram flood limits.
-    MAX_POSTS_PER_RUN = 5
+    # Configurable max batch size per run (default to 15 posts)
+    max_posts_env = os.environ.get("MAX_POSTS_PER_RUN", "").strip()
+    MAX_POSTS_PER_RUN = int(max_posts_env) if max_posts_env.isdigit() else 15
 
     # Sort all candidates by published_at (oldest to newest)
     all_new_items.sort(key=lambda x: x.published_at)
@@ -126,8 +127,8 @@ def run_cycle(
             else:
                 consecutive_failures += 1
                 logger.error("Failed to send %s to Telegram.", item.id)
-                # If 2 consecutive failures occur (e.g. channel permission or flood limit), stop this cycle early
-                if consecutive_failures >= 2:
+                # If 4 consecutive failures occur, stop this cycle early
+                if consecutive_failures >= 4:
                     logger.warning("Aborting remaining posts in this cycle due to repeated send failures.")
                     break
 
