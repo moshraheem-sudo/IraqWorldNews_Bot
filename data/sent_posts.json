@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "last_updated": "2026-11-24T15:29:23.764949Z",
-  "total_sent": 639,
+  "last_updated": "2026-11-24T15:56:44.462329Z",
+  "total_sent": 657,
   "sent_ids": [
     "tg:alsharqiyagroup:57352",
     "tg:almayadeen:407738",
@@ -641,6 +641,24 @@
     "tg:alsharqiyagroup:57385",
     "rss:independent_ar_rss:16a049e2",
     "tg:baghdadtoday:147110",
-    "tg:alsharqiyagroup:57386"
+    "tg:alsharqiyagroup:57386",
+    "rss:aljazeera_rss:1fd76196",
+    "rss:aljazeera_rss:7a65feee",
+    "rss:aljazeera_rss:210ab58c",
+    "rss:aljazeera_rss:38af07f9",
+    "rss:aljazeera_rss:0c10ad86",
+    "tg:alsharqiyagroup:57387",
+    "tg:almayadeen:407864",
+    "tg:sabrennewss:232464",
+    "tg:rudawarabic:124841",
+    "tg:sabrennewss:232465",
+    "tg:alsharqiyagroup:57388",
+    "tg:almayadeen:407865",
+    "tg:almayadeen:407866",
+    "tg:alsharqiyagroup:57389",
+    "tg:sabrennewss:232467",
+    "rss:skynews_rss:390c6a85",
+    "tg:sabrennewss:232468",
+    "tg:rudawarabic:124842"
   ]
 }
