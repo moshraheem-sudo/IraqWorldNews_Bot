@@ -172,6 +172,66 @@
       "enabled": true
     },
     {
+      "id": "alhadath_tg",
+      "type": "telegram_web",
+      "name": "قناة الحدث",
+      "username": "AlHadath",
+      "url": "https://t.me/s/AlHadath",
+      "category": "أخبار عربية وعالمية",
+      "hashtag": "الحدث",
+      "language": "ar",
+      "enabled": true,
+      "max_posts": 30
+    },
+    {
+      "id": "aljazeera_breaking_tg",
+      "type": "telegram_web",
+      "name": "الجزيرة - عاجل",
+      "username": "AJA_Breaking",
+      "url": "https://t.me/s/AJA_Breaking",
+      "category": "أخبار عربية وعالمية",
+      "hashtag": "الجزيرة_عاجل",
+      "language": "ar",
+      "enabled": true,
+      "max_posts": 30
+    },
+    {
+      "id": "x_skynews_breaking",
+      "type": "x_account",
+      "name": "سكاي نيوز عربية - عاجل",
+      "username": "SkyNewsArabia_B",
+      "url": "https://x.com/SkyNewsArabia_B",
+      "category": "أخبار عربية وعالمية",
+      "hashtag": "سكاي_نيوز_عاجل",
+      "language": "ar",
+      "enabled": true,
+      "max_posts": 30
+    },
+    {
+      "id": "x_aljazeera_now",
+      "type": "x_account",
+      "name": "الجزيرة - عاجل",
+      "username": "aljazeera_now",
+      "url": "https://x.com/aljazeera_now",
+      "category": "أخبار عربية وعالمية",
+      "hashtag": "الجزيرة_عاجل",
+      "language": "ar",
+      "enabled": true,
+      "max_posts": 30
+    },
+    {
+      "id": "x_alhadath",
+      "type": "x_account",
+      "name": "قناة الحدث",
+      "username": "AlHadath",
+      "url": "https://x.com/AlHadath",
+      "category": "أخبار عربية وعالمية",
+      "hashtag": "الحدث",
+      "language": "ar",
+      "enabled": true,
+      "max_posts": 30
+    },
+    {
       "id": "x_news_list",
       "type": "x_list",
       "name": "أخبار منصة X",

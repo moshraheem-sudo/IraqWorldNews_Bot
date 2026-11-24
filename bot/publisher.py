@@ -69,17 +69,27 @@ def run_cycle(
     seen_in_batch_titles: Set[str] = set()
 
     logger.info("Starting scrape across %d configured sources...", len(config.sources))
+    cached_x_list_content: Optional[str] = None
 
     try:
         for source in config.sources:
             logger.info("Processing source: %s (%s)", source.name, source.url)
             target_url = source.url
-            if source.source_type == "x_list":
+            content = None
+
+            if source.source_type in ("x_list", "x_account"):
+                # Syndication timeline list provides real-time updates for major news accounts
+                list_id = "1763642433328279733"
                 match = re.search(r"(\d{6,})", source.url) or re.search(r"(\d{6,})", source.username)
                 if match:
-                    target_url = f"https://syndication.twitter.com/srv/timeline-list/list-id/{match.group(1)}"
+                    list_id = match.group(1)
+                x_endpoint = f"https://syndication.twitter.com/srv/timeline-list/list-id/{list_id}"
+                if cached_x_list_content is None:
+                    cached_x_list_content = fetch_url(session, x_endpoint, timeout=config.request_timeout)
+                content = cached_x_list_content
+            else:
+                content = fetch_url(session, target_url, timeout=config.request_timeout)
 
-            content = fetch_url(session, target_url, timeout=config.request_timeout)
             if not content:
                 logger.warning("No content returned for %s", source.name)
                 continue
@@ -87,6 +97,10 @@ def run_cycle(
             try:
                 if source.source_type == "rss":
                     items = parse_rss_feed(content, source)
+                elif source.source_type == "x_account":
+                    # Filter specifically for the account screen name
+                    filter_name = source.username.strip().lstrip("@")
+                    items = parse_x_list(content, source, filter_username=filter_name)
                 elif source.source_type == "x_list":
                     items = parse_x_list(content, source)
                 else:

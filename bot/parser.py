@@ -248,8 +248,8 @@ def parse_rss_feed(xml_content: str, source: SourceConfig) -> List[NewsItem]:
     return items
 
 
-def parse_x_list(html_content: str, source: SourceConfig) -> List[NewsItem]:
-    """Parse public X / Twitter List HTML embed syndication."""
+def parse_x_list(html_content: str, source: SourceConfig, filter_username: Optional[str] = None) -> List[NewsItem]:
+    """Parse public X / Twitter List or Account HTML embed syndication."""
     match = re.search(r'<script\s+id="__NEXT_DATA__"[^>]*>(.*?)</script>', html_content, re.DOTALL)
     if not match:
         return []
@@ -265,6 +265,19 @@ def parse_x_list(html_content: str, source: SourceConfig) -> List[NewsItem]:
         .get("entries", [])
     )
     items: List[NewsItem] = []
+    
+    # Target username normalization for filtering
+    target_users = set()
+    if filter_username:
+        f_low = filter_username.lower().strip().lstrip("@")
+        target_users.add(f_low)
+        if f_low in ("aljazeera_now", "ajabreaking", "ajarabic"):
+            target_users.update(["aljazeera_now", "ajabreaking", "ajarabic"])
+        elif f_low in ("skynewsarabia_b", "skynewsarabia"):
+            target_users.update(["skynewsarabia_b", "skynewsarabia"])
+        elif f_low in ("alhadath", "alhadath_ymn"):
+            target_users.update(["alhadath", "alhadath_ymn"])
+
     for entry in entries:
         tweet = entry.get("content", {}).get("tweet")
         if not isinstance(tweet, dict):
@@ -274,8 +287,13 @@ def parse_x_list(html_content: str, source: SourceConfig) -> List[NewsItem]:
             continue
 
         user = tweet.get("user") or {}
-        screen_name = user.get("screen_name") or "X"
-        user_name = user.get("name") or "منصة X"
+        screen_name = str(user.get("screen_name") or "X").strip()
+        user_name = str(user.get("name") or "منصة X").strip()
+
+        # If filtering by specific account
+        if target_users and screen_name.lower() not in target_users:
+            continue
+
         raw_text = tweet.get("text") or ""
         clean_tweet_text = clean_text(raw_text)
 
@@ -330,13 +348,30 @@ def parse_x_list(html_content: str, source: SourceConfig) -> List[NewsItem]:
         original_url = f"https://x.com/{screen_name}/status/{tweet_id}"
         post_id = f"x:{tweet_id}"
 
+        # Determine hashtag
+        screen_lower = screen_name.lower()
+        if source.source_type == "x_account" and source.hashtag:
+            hashtag = source.hashtag
+        elif "skynews" in screen_lower:
+            hashtag = "سكاي_نيوز"
+        elif "hadath" in screen_lower:
+            hashtag = "الحدث"
+        elif "jazeera" in screen_lower or screen_lower.startswith("aja"):
+            hashtag = "الجزيرة_عاجل"
+        elif "arabiya" in screen_lower:
+            hashtag = "العربية"
+        else:
+            hashtag = "منصة_X"
+
+        source_display_name = source.name if source.source_type == "x_account" else f"{user_name} (@{screen_name})"
+
         items.append(
             NewsItem(
                 id=post_id,
-                source_name=f"{user_name} (@{screen_name})",
+                source_name=source_display_name,
                 source_username=screen_name,
                 category=source.category,
-                hashtag="منصة_X",
+                hashtag=hashtag,
                 title=title,
                 content=clean_tweet_text,
                 original_url=original_url,

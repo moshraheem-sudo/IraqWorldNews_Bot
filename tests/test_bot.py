@@ -144,6 +144,14 @@ class TestBotComponents(unittest.TestCase):
         self.assertEqual(items[0].video_url, "https://video.twimg.com/test.mp4")
         self.assertIn("تصريح هام", items[0].content)
 
+        # Test filtering by matching username
+        matched_items = parse_x_list(sample_x_html, source, filter_username="AlArabiya")
+        self.assertEqual(len(matched_items), 1)
+
+        # Test filtering by non-matching username
+        unmatched_items = parse_x_list(sample_x_html, source, filter_username="NonExistentAccount")
+        self.assertEqual(len(unmatched_items), 0)
+
 
 if __name__ == "__main__":
     unittest.main()
