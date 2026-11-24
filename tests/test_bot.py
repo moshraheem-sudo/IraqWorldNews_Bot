@@ -5,6 +5,7 @@ from pathlib import Path
 
 from bot.config import SourceConfig, load_app_config
 from bot.parser import NewsItem, derive_title, parse_rss_feed, parse_telegram_web
+from bot.publisher import normalize_title_for_dedup
 from bot.storage import StorageManager
 from bot.telegram_client import format_news_post
 
@@ -50,6 +51,16 @@ class TestBotComponents(unittest.TestCase):
         finally:
             if test_file.exists():
                 test_file.unlink()
+
+    def test_title_deduplication(self):
+        t1 = "عاجل: وزارة التربية تعلن موعد الامتحانات النهائية!"
+        t2 = "وزارة التربية تعلن موعد الامتحانات النهائية لجميع المراحل"
+        t3 = "عاجل | زلزال بقوة 5 درجات يضرب جنوب تركيا"
+        k1 = normalize_title_for_dedup(t1)
+        k2 = normalize_title_for_dedup(t2)
+        k3 = normalize_title_for_dedup(t3)
+        self.assertEqual(k1, k2)
+        self.assertNotEqual(k1, k3)
 
     def test_rss_parser(self):
         sample_rss = """<?xml version="1.0" encoding="UTF-8"?>

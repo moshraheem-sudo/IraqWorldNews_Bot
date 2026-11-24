@@ -5,10 +5,11 @@ from __future__ import annotations
 import argparse
 import logging
 import os
+import re
 import sys
 import time
 from pathlib import Path
-from typing import List
+from typing import List, Set
 
 from bot.config import AppConfig, load_app_config
 from bot.fetcher import create_http_session, fetch_url
@@ -21,6 +22,25 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 logger = logging.getLogger("iraq_world_news_bot")
+
+
+def normalize_title_for_dedup(title: str) -> str:
+    """Normalize news headlines for cross-source deduplication."""
+    if not title or len(title.strip()) < 8:
+        return ""
+    t = title.strip()
+    for prefix in ["عاجل :", "عاجل -", "عاجل |", "عاجل:", "عاجل", "هام:", "هام |", "هام", "بالوثيقة", "بالفيديو", "تنويه"]:
+        if t.startswith(prefix):
+            t = t[len(prefix):].strip()
+    t = re.sub(r"[^\w\s]", "", t)
+    t = re.sub(r"[\u064B-\u0652\u0670]", "", t)
+    t = re.sub(r"[إأآا]", "ا", t)
+    t = re.sub(r"[ىي]", "ي", t)
+    t = re.sub(r"ة", "ه", t)
+    words = [w for w in t.split() if len(w) > 2]
+    if len(words) < 3:
+        return ""
+    return " ".join(words[:6])
 
 
 def run_cycle(
@@ -46,6 +66,7 @@ def run_cycle(
 
     session = create_http_session(config.user_agent)
     all_new_items: List[NewsItem] = []
+    seen_in_batch_titles: Set[str] = set()
 
     logger.info("Starting scrape across %d configured sources...", len(config.sources))
 
@@ -65,10 +86,20 @@ def run_cycle(
 
                 logger.info("Extracted %d items from %s", len(items), source.name)
 
-                # Filter unsent items
+                # Filter unsent items by ID and by headline fingerprint (cross-source duplicate protection)
                 for item in items:
-                    if not storage.is_sent(item.id):
-                        all_new_items.append(item)
+                    if storage.is_sent(item.id):
+                        continue
+
+                    title_key = normalize_title_for_dedup(item.title)
+                    if title_key:
+                        if storage.is_title_sent(title_key) or title_key in seen_in_batch_titles:
+                            logger.info("Skipping cross-source duplicate headline: %s", item.title[:50])
+                            storage.mark_sent(item.id, title_key)
+                            continue
+                        seen_in_batch_titles.add(title_key)
+
+                    all_new_items.append(item)
 
             except Exception as e:
                 logger.error("Error parsing source %s: %s", source.name, e)
@@ -101,7 +132,8 @@ def run_cycle(
         items_to_send = all_new_items[-MAX_POSTS_PER_RUN:]
         # Mark all older overflow items as sent in storage so backlog never accumulates
         for item in all_new_items[:-MAX_POSTS_PER_RUN]:
-            storage.mark_sent(item.id)
+            title_key = normalize_title_for_dedup(item.title)
+            storage.mark_sent(item.id, title_key)
     else:
         items_to_send = all_new_items
 
@@ -111,16 +143,17 @@ def run_cycle(
     consecutive_failures = 0
 
     for idx, item in enumerate(items_to_send, 1):
+        title_key = normalize_title_for_dedup(item.title)
         logger.info("[%d/%d] Publishing: [%s] %s", idx, len(items_to_send), item.source_name, item.title[:50])
 
         if dry_run:
             logger.info("[DRY RUN] Would send item %s to %s", item.id, config.telegram_chat_id)
-            storage.mark_sent(item.id)
+            storage.mark_sent(item.id, title_key)
             published_count += 1
         else:
             success = telegram.send_news(item)
             if success:
-                storage.mark_sent(item.id)
+                storage.mark_sent(item.id, title_key)
                 published_count += 1
                 consecutive_failures = 0
                 logger.info("Successfully published %s", item.id)
