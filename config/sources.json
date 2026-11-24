@@ -170,6 +170,17 @@
       "hashtag": "إندبندنت",
       "language": "ar",
       "enabled": true
+    },
+    {
+      "id": "x_news_list",
+      "type": "x_list",
+      "name": "أخبار منصة X",
+      "username": "list_1763642433328279733",
+      "url": "https://x.com/i/lists/1763642433328279733",
+      "category": "أخبار عربية وعالمية",
+      "hashtag": "منصة_X",
+      "language": "ar",
+      "enabled": true
     }
   ]
 }

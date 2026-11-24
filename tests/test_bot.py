@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 
 from bot.config import SourceConfig, load_app_config
-from bot.parser import NewsItem, derive_title, parse_rss_feed, parse_telegram_web
+from bot.parser import NewsItem, derive_title, parse_rss_feed, parse_telegram_web, parse_x_list
 from bot.publisher import normalize_title_for_dedup
 from bot.storage import StorageManager
 from bot.telegram_client import format_news_post
@@ -90,6 +90,45 @@ class TestBotComponents(unittest.TestCase):
         self.assertEqual(len(items), 1)
         self.assertEqual(items[0].title, "عاجل: خبر سياسي واقتصادي")
         self.assertEqual(items[0].original_url, "https://example.com/news/123")
+
+    def test_x_list_parser(self):
+        sample_x_html = '''<html><body>
+        <script id="__NEXT_DATA__" type="application/json">
+        {
+            "props": {
+                "pageProps": {
+                    "timeline": {
+                        "entries": [
+                            {
+                                "content": {
+                                    "tweet": {
+                                        "id_str": "1234567890123456789",
+                                        "text": "عاجل: تصريح هام لوزير الخارجية حول الأوضاع الإقليمية",
+                                        "user": {"screen_name": "AlArabiya", "name": "العربية عاجل"},
+                                        "created_at": "Tue Nov 24 16:00:00 +0000 2026",
+                                        "photos": [{"url": "https://pbs.twimg.com/media/example.jpg"}]
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+        </script></body></html>'''
+        source = SourceConfig(
+            id="x_test",
+            source_type="x_list",
+            name="منصة X",
+            username="test_list",
+            url="https://x.com/i/lists/123456",
+            category="أخبار عربية وعالمية",
+        )
+        items = parse_x_list(sample_x_html, source)
+        self.assertEqual(len(items), 1)
+        self.assertEqual(items[0].id, "x:1234567890123456789")
+        self.assertEqual(items[0].image_url, "https://pbs.twimg.com/media/example.jpg")
+        self.assertIn("تصريح هام", items[0].content)
 
 
 if __name__ == "__main__":

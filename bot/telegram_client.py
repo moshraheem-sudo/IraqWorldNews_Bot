@@ -112,9 +112,33 @@ class TelegramClient:
             logger.error("Telegram bot token or chat ID is missing! Cannot send post.")
             return False
 
-        # Post as text with web preview disabled to prevent Telegram server-side crawl timeouts
+        # Attempt to send as Photo with caption if item has an image
+        if item.image_url and item.image_url.startswith("http"):
+            caption = format_news_post(item, max_body_len=950)
+            if self._send_photo(item.image_url, caption):
+                return True
+            logger.info("sendPhoto failed or timed out for %s, falling back to formatted text.", item.id)
+
+        # Fallback / Text post with preview disabled
         text = format_news_post(item, max_body_len=3500)
         return self._send_text(text)
+
+    def _send_photo(self, photo_url: str, caption: str) -> bool:
+        endpoint = f"{self.api_url}/sendPhoto"
+        payload = {
+            "chat_id": self.chat_id,
+            "photo": photo_url,
+            "caption": caption,
+            "parse_mode": "HTML",
+        }
+        success = self._post_with_retry(endpoint, payload, timeout=25)
+        if not success and self.chat_id.isdigit() and not self.chat_id.startswith("-100"):
+            alt_chat_id = f"-100{self.chat_id}"
+            payload["chat_id"] = alt_chat_id
+            if self._post_with_retry(endpoint, payload, timeout=25):
+                self.chat_id = alt_chat_id
+                return True
+        return success
 
     def _send_text(self, text: str) -> bool:
         endpoint = f"{self.api_url}/sendMessage"
@@ -135,10 +159,10 @@ class TelegramClient:
                 return True
         return success
 
-    def _post_with_retry(self, endpoint: str, payload: dict, retries: int = 1) -> bool:
+    def _post_with_retry(self, endpoint: str, payload: dict, retries: int = 1, timeout: int = 40) -> bool:
         for attempt in range(retries + 1):
             try:
-                resp = self.session.post(endpoint, json=payload, timeout=40)
+                resp = self.session.post(endpoint, json=payload, timeout=timeout)
                 data = resp.json()
 
                 if data.get("ok"):

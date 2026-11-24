@@ -13,7 +13,7 @@ from typing import List, Set
 
 from bot.config import AppConfig, load_app_config
 from bot.fetcher import create_http_session, fetch_url
-from bot.parser import NewsItem, parse_rss_feed, parse_telegram_web
+from bot.parser import NewsItem, parse_rss_feed, parse_telegram_web, parse_x_list
 from bot.storage import StorageManager
 from bot.telegram_client import TelegramClient
 
@@ -73,7 +73,13 @@ def run_cycle(
     try:
         for source in config.sources:
             logger.info("Processing source: %s (%s)", source.name, source.url)
-            content = fetch_url(session, source.url, timeout=config.request_timeout)
+            target_url = source.url
+            if source.source_type == "x_list":
+                match = re.search(r"(\d{6,})", source.url) or re.search(r"(\d{6,})", source.username)
+                if match:
+                    target_url = f"https://syndication.twitter.com/srv/timeline-list/list-id/{match.group(1)}"
+
+            content = fetch_url(session, target_url, timeout=config.request_timeout)
             if not content:
                 logger.warning("No content returned for %s", source.name)
                 continue
@@ -81,6 +87,8 @@ def run_cycle(
             try:
                 if source.source_type == "rss":
                     items = parse_rss_feed(content, source)
+                elif source.source_type == "x_list":
+                    items = parse_x_list(content, source)
                 else:
                     items = parse_telegram_web(content, source)
 

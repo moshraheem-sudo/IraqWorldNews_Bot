@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import html
+import json
 import re
 import zlib
 from dataclasses import dataclass
@@ -244,3 +245,76 @@ def parse_rss_feed(xml_content: str, source: SourceConfig) -> List[NewsItem]:
         )
 
     return items
+
+
+def parse_x_list(html_content: str, source: SourceConfig) -> List[NewsItem]:
+    """Parse public X / Twitter List HTML embed syndication."""
+    match = re.search(r'<script\s+id="__NEXT_DATA__"[^>]*>(.*?)</script>', html_content, re.DOTALL)
+    if not match:
+        return []
+    try:
+        data = json.loads(match.group(1))
+    except Exception:
+        return []
+
+    entries = (
+        data.get("props", {})
+        .get("pageProps", {})
+        .get("timeline", {})
+        .get("entries", [])
+    )
+    items: List[NewsItem] = []
+    for entry in entries:
+        tweet = entry.get("content", {}).get("tweet")
+        if not isinstance(tweet, dict):
+            continue
+        tweet_id = str(tweet.get("id_str") or "").strip()
+        if not tweet_id.isdigit():
+            continue
+
+        user = tweet.get("user") or {}
+        screen_name = user.get("screen_name") or "X"
+        user_name = user.get("name") or "منصة X"
+        raw_text = tweet.get("text") or ""
+        clean_tweet_text = clean_text(raw_text)
+
+        # Skip retweets without text or empty tweets
+        if not clean_tweet_text:
+            continue
+
+        # Photos
+        image_url = None
+        photos = tweet.get("photos", [])
+        if photos and isinstance(photos, list):
+            first_photo = photos[0]
+            if isinstance(first_photo, dict) and first_photo.get("url"):
+                image_url = first_photo.get("url")
+
+        created_at_raw = tweet.get("created_at")
+        published_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        if created_at_raw:
+            try:
+                dt = datetime.strptime(created_at_raw.strip(), "%a %b %d %H:%M:%S %z %Y")
+                published_at = dt.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+            except Exception:
+                pass
+
+        title = derive_title(clean_tweet_text)
+        original_url = f"https://x.com/{screen_name}/status/{tweet_id}"
+        post_id = f"x:{tweet_id}"
+
+        items.append(
+            NewsItem(
+                id=post_id,
+                source_name=f"{user_name} (@{screen_name})",
+                source_username=screen_name,
+                category=source.category,
+                hashtag="منصة_X",
+                title=title,
+                content=clean_tweet_text,
+                original_url=original_url,
+                image_url=image_url,
+                published_at=published_at,
+            )
+        )
+    return items[-source.max_posts:]
