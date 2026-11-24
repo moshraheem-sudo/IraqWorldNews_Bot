@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "last_updated": "2026-11-24T16:01:34.659132Z",
-  "total_sent": 660,
+  "last_updated": "2026-11-24T16:11:11.816627Z",
+  "total_sent": 670,
   "sent_ids": [
     "tg:alsharqiyagroup:57352",
     "tg:almayadeen:407738",
@@ -662,6 +662,27 @@
     "tg:rudawarabic:124842",
     "rss:rt_arabic_rss:287cda8c",
     "tg:alarabiya:170527",
-    "tg:rudawarabic:124843"
+    "tg:rudawarabic:124843",
+    "rss:bbc_arabic_rss:79376b54",
+    "tg:alsharqiyagroup:57390",
+    "tg:sabrennewss:232469",
+    "rss:skynews_rss:042abbf6",
+    "tg:sabrennewss:232470",
+    "tg:rudawarabic:124844",
+    "tg:almayadeen:407867",
+    "tg:almayadeen:407868",
+    "tg:almayadeen:407869",
+    "tg:almayadeen:407870"
+  ],
+  "sent_titles": [
+    "العنف النساء مشكله ثقافيه ازمه قوانين",
+    "اعلام العدو الاميركي",
+    "ازمه التدفئه تدفع اللبنانيين الي استخدام",
+    "جمهور صابرين الاعزاء يمكنكم متابعتنا",
+    "بافل طالباني الخلافات يجب يكون بالاحتكام",
+    "اليمن وكاله سبا بصنعاء غارات سعوديه",
+    "العراق رئيس الاتحاد الوطني الكوردستاني بافل",
+    "العراق طالباني الاستقرار الحقيقي يتطلب المساءله",
+    "العراق طالباني نعتز بهويتنا وبحقوق شعبنا"
   ]
 }
