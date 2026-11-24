@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "last_updated": "2026-11-24T15:56:44.462329Z",
-  "total_sent": 657,
+  "last_updated": "2026-11-24T15:59:35.421611Z",
+  "total_sent": 660,
   "sent_ids": [
     "tg:alsharqiyagroup:57352",
     "tg:almayadeen:407738",
@@ -659,6 +659,9 @@
     "tg:sabrennewss:232467",
     "rss:skynews_rss:390c6a85",
     "tg:sabrennewss:232468",
-    "tg:rudawarabic:124842"
+    "tg:rudawarabic:124842",
+    "rss:rt_arabic_rss:287cda8c",
+    "tg:alarabiya:170527",
+    "tg:rudawarabic:124843"
   ]
 }
